@@ -49,10 +49,27 @@ export default function Signup() {
           className="bg-white p-5 rounded-4 shadow"
           style={{ width: "100%", maxWidth: 480 }}
         >
-          <div className="text-center mb-4">
-            <h2 className="fw-bold mt-2">Create Account</h2>
-            <p className="text-muted">Sign up to start managing your tasks</p>
-          </div>
+      
+<div className="text-center mb-4">
+  <h2
+    className="mt-2 mb-2"
+    style={{
+      fontSize: "30px",
+      fontWeight: 700,
+      color: "#0866e9",
+      filter: "none",
+      opacity: 1,
+      textShadow: "none",
+      transform: "none",
+    }}
+  >
+    Create Account
+  </h2>
+
+  <p className="text-muted">
+    Sign up to start managing your tasks
+  </p>
+</div>
 
           {error && <div className="alert alert-danger">{error}</div>}
 

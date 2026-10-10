@@ -1,6 +1,27 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Environment variables (do not commit secrets)
 .env
 .env.*
-env
+.env.local
+.env.*.local
+!.env.example
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System & IDE files
 .DS_Store
-dist
+.vscode/
+.idea/
+
+# Vercel CLI cache
+.vercel/

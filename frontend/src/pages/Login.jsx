@@ -48,9 +48,26 @@ export default function Login() {
           style={{ width: "100%", maxWidth: 480 }}
         >
           <div className="text-center mb-4">
-            <h2 className="fw-bold mt-2">Welcome Back</h2>
-            <p className="text-muted">Sign in to continue to your account</p>
-          </div>
+  <h2
+    className="mt-2 mb-2"
+    style={{
+      fontSize: "30px",
+      fontWeight: 700,
+      color: "#0866e9",
+      filter: "none",
+      opacity: 1,
+      textShadow: "none",
+      transform: "none",
+    }}
+  >
+    Welcome Back
+  </h2>
+
+  <p className="text-muted">
+    Sign in to continue to your account
+  </p>
+</div>
+
 
           {error && <div className="alert alert-danger">{error}</div>}
 

@@ -1,7 +1,15 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Environment variables
 .env
+.env.*
 .env.local
 .env.*.local
+!.env.example
 
-frontend/.env
-backend/.env
+# Logs
+*.log
+
+# Vercel
+.vercel/

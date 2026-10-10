@@ -1,79 +1,92 @@
-console.log("Node.js project is running111");
-console.log("Task Management Server is running");
-console.log("Task Management Server is running1111");
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import dns from "dns";
 import authRoutes from "./routes/authRoute.js";
 import taskRoutes from "./routes/taskRoute.js";
-// load environment variables from .env file
-dotenv.config();
 
-// Create an Express application.
-// We will use "app" to configure middleware, routes, and start the server.
+// Set reliable DNS servers to avoid SRV query issues on Windows
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (e) {
+  // Ignore if not permitted
+}
+
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from .env file (both local backend and root)
+dotenv.config();
+dotenv.config({ path: path.join(__dirname, ".env") });
+
+// Create an Express application
 const app = express();
 
-// Enable CORS for the application.
-// This allows requests from applications such as our React frontend.
+// Enable CORS for the application
 app.use(cors());
 
-
-// Tell Express to understand JSON data sent by the client.
-//
-// Example request body:
-// {
-//   "name": "Ali",
-//   "email": "ali@example.com"
-// }
-
+// Enable JSON body parsing
 app.use(express.json());
 
+// MongoDB connection helper with caching for Serverless environments
+let isConnected = false;
+let isConnecting = false;
 
-// Connect our Node.js application to MongoDB.
-//
-// process.env.MONGO_URI reads the MongoDB connection string
-// from the .env file.
+const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    isConnected = true;
+    return;
+  }
+  if (isConnecting) return;
 
-mongoose.connect(process.env.MONGODB_URI).then(() => {
-    console.log("Connected to MongoDB");
-}).catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
-})
+  try {
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+    if (!mongoUri) {
+      console.warn("MONGODB_URI is not defined in environment variables");
+      return;
+    }
+    isConnecting = true;
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 5000,
+    });
+    isConnected = true;
+    console.log("Connected to MongoDB successfully");
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error.message || error);
+  } finally {
+    isConnecting = false;
+  }
+};
 
-// Create our first API route.
-//
-// app.get() means this route accepts a GET request.
-//
-// "/" means the root URL.
-//
-// Example:
-// GET http://localhost:5000/
+// Initial DB connection attempt on startup
+connectDB();
 
-  // req means Request.
-  // It contains information sent by the client.
+// Health check routes
+app.get("/", (req, res) => {
+  res.json({ status: "ok", message: "Task Management Server is running" });
+});
 
-  // res means Response.
-  // We use it to send information back to the client.
+app.get("/api", (req, res) => {
+  res.json({ status: "ok", message: "Task Management API is running" });
+});
 
-  // Send a JSON response.
-
-
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
-// Read the PORT value from the .env file.
-//
-// If PORT is not available,
-// use 5000 as the default port.
+
+// Read the PORT value from the .env file (default to 5000)
 const port = process.env.PORT || 5000;
-// Start the Express server.
-//
-// app.listen() tells the server to listen
-// for incoming HTTP requests on the selected port.
 
-app.listen(port, () =>{
+// Start the Express server locally (when not running inside Vercel serverless wrapper)
+if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+  app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
-})
+  });
+}
 
-
-//node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+// Export the Express app for Vercel Serverless Functions
+export default app;
