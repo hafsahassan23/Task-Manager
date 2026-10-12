@@ -27,21 +27,28 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 const app = express();
 
 // Enable CORS for the application
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Enable JSON body parsing
 app.use(express.json());
 
 // MongoDB connection helper with caching for Serverless environments
-let isConnected = false;
-let isConnecting = false;
-
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
-    isConnected = true;
+  if (mongoose.connection.readyState === 1) {
     return;
   }
-  if (isConnecting) return;
+  if (mongoose.connection.readyState === 2) {
+    while (mongoose.connection.readyState === 2) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return;
+  }
 
   try {
     const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
@@ -49,21 +56,27 @@ const connectDB = async () => {
       console.warn("MONGODB_URI is not defined in environment variables");
       return;
     }
-    isConnecting = true;
     await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000,
     });
-    isConnected = true;
     console.log("Connected to MongoDB successfully");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error.message || error);
-  } finally {
-    isConnecting = false;
   }
 };
 
 // Initial DB connection attempt on startup
 connectDB();
+
+// Ensure DB connection is established before handling requests in Serverless
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error("DB connection error:", err);
+  }
+  next();
+});
 
 // Health check routes
 app.get("/", (req, res) => {
@@ -74,9 +87,11 @@ app.get("/api", (req, res) => {
   res.json({ status: "ok", message: "Task Management API is running" });
 });
 
-// API Routes
+// API Routes (supports both with and without /api prefix)
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/tasks", taskRoutes);
 
 // Read the PORT value from the .env file (default to 5000)
 const port = process.env.PORT || 5000;

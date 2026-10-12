@@ -1,8 +1,15 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/+$/, "");
+  }
+  return import.meta.env.PROD ? "/api" : "http://localhost:5000/api";
+};
+
 // One shared axios instance for the whole app.
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: getBaseURL(),
 });
 
 // Attach the saved token to every request automatically.

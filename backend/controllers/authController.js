@@ -61,15 +61,17 @@ export const login = async (req, res) => {
         message: "Invalid password",
       });
     }
+    const jwtSecret =
+      process.env.JWT_SECRET || "default_task_manager_secret_jwt_key_2026";
     const token = jwt.sign(
-    {
+      {
         userId: user._id,
         email: user.email,
-    },
-    process.env.JWT_SECRET,
-    {
-        expiresIn: "1h", // Token expires in 1 hour
-    }
+      },
+      jwtSecret,
+      {
+        expiresIn: "7d",
+      }
     );
     res.status(200).json({
       message: "Login successful",

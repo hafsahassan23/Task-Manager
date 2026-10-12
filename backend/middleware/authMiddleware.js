@@ -17,11 +17,10 @@ export const authMiddleware = (req, res, next) => {
     // Authorization: Bearer eyJhbGciOi...
     const token = authHeader.split(" ")[1];
 
-    // Verify token using the same secret used during login
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    // Verify token using the secret (with fallback)
+    const jwtSecret =
+      process.env.JWT_SECRET || "default_task_manager_secret_jwt_key_2026";
+    const decoded = jwt.verify(token, jwtSecret);
 
     // Save decoded user information in the request
     req.user = decoded;
